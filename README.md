@@ -16,10 +16,5 @@ at checkout to maximise cashback and rewards.
 ## Stack
 Python · Flask · JavaScript · REST API
 
-## Run it
-pip install flask
-python app.py
-Open http://localhost:8080
-
 ## Live demo
 [Click here](https://4a8eac44-4dbc-4067-97cf-aa8ebed8cb6d-00-2dwtz85yfohh6.pike.replit.dev/)
