@@ -1,657 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KVSH — Payment Decision Engine</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #0e0f11;
-    --surface: #16181c;
-    --surface2: #1e2126;
-    --border: #2a2d34;
-    --text: #e8eaf0;
-    --muted: #6b7280;
-    --accent: #c8f135;
-    --accent-dim: #8aaa22;
-    --warn: #f59e0b;
-    --danger: #ef4444;
-    --success: #c8f135;
-    --font: 'DM Sans', sans-serif;
-    --mono: 'DM Mono', monospace;
-  }
-
-  body {
-    font-family: var(--font);
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 40px 16px 80px;
-  }
-
-  header {
-    width: 100%;
-    max-width: 560px;
-    margin-bottom: 40px;
-  }
-
-  .logo {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--accent);
-    letter-spacing: 0.1em;
-    margin-bottom: 12px;
-  }
-
-  h1 {
-    font-size: 28px;
-    font-weight: 300;
-    color: var(--text);
-    line-height: 1.2;
-  }
-
-  h1 span { font-weight: 500; }
-
-  .subtitle {
-    font-size: 14px;
-    color: var(--muted);
-    margin-top: 6px;
-  }
-
-  .form-card {
-    width: 100%;
-    max-width: 560px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 28px;
-    margin-bottom: 20px;
-  }
-
-  .field { margin-bottom: 22px; }
-  .field:last-child { margin-bottom: 0; }
-
-  label {
-    display: block;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--muted);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-  }
-
-  .category-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-  }
-  .category-grid .cat-btn:last-child:nth-child(3n - 1) {
-    grid-column: span 1;
-  }
-
-  .cat-btn {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 8px;
-    color: var(--muted);
-    font-family: var(--font);
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .cat-btn:hover { border-color: #3a3d44; color: var(--text); }
-  .cat-btn.active {
-    background: rgba(200, 241, 53, 0.08);
-    border-color: var(--accent-dim);
-    color: var(--accent);
-  }
-
-  .cat-icon { font-size: 18px; }
-
-  .amount-row {
-    display: flex;
-    align-items: center;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-    transition: border-color 0.15s;
-  }
-
-  .amount-row:focus-within { border-color: var(--accent-dim); }
-
-  .rupee {
-    padding: 0 14px;
-    font-size: 18px;
-    color: var(--muted);
-    font-weight: 300;
-  }
-
-  input[type="number"] {
-    flex: 1;
-    background: none;
-    border: none;
-    outline: none;
-    font-family: var(--mono);
-    font-size: 22px;
-    font-weight: 500;
-    color: var(--text);
-    padding: 14px 14px 14px 0;
-    width: 100%;
-  }
-
-  input[type="number"]::-webkit-outer-spin-button,
-  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
-
-  .cards-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-
-  .card-toggle {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px;
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    color: var(--muted);
-  }
-
-  .card-toggle:hover { border-color: #3a3d44; color: var(--text); }
-
-  .card-toggle.active {
-    background: rgba(200, 241, 53, 0.06);
-    border-color: var(--accent-dim);
-    color: var(--text);
-  }
-
-  .check {
-    width: 16px; height: 16px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s;
-  }
-
-  .card-toggle.active .check {
-    background: var(--accent);
-    border-color: var(--accent);
-  }
-
-  .check-mark {
-    font-size: 10px;
-    color: #0e0f11;
-    display: none;
-  }
-
-  .card-toggle.active .check-mark { display: block; }
-
-  .card-info { flex: 1; min-width: 0; }
-  .card-name { font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .card-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
-
-  .decide-btn {
-    width: 100%;
-    max-width: 560px;
-    background: var(--accent);
-    color: #0e0f11;
-    border: none;
-    border-radius: 12px;
-    padding: 16px;
-    font-family: var(--font);
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 0.01em;
-  }
-
-  .decide-btn:hover { background: #d4f54a; transform: translateY(-1px); }
-  .decide-btn:active { transform: translateY(0); }
-  .decide-btn:disabled { background: var(--surface2); color: var(--muted); cursor: default; transform: none; }
-
-  .result-card {
-    width: 100%;
-    max-width: 560px;
-    border-radius: 16px;
-    padding: 28px;
-    margin-top: 20px;
-    display: none;
-    animation: slideIn 0.25s ease;
-  }
-
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .result-card.show { display: block; }
-
-  .result-card.success {
-    background: rgba(200, 241, 53, 0.06);
-    border: 1px solid rgba(200, 241, 53, 0.25);
-  }
-
-  .result-card.warn {
-    background: rgba(245, 158, 11, 0.06);
-    border: 1px solid rgba(245, 158, 11, 0.25);
-  }
-
-  .result-card.error {
-    background: rgba(239, 68, 68, 0.06);
-    border: 1px solid rgba(239, 68, 68, 0.25);
-  }
-
-  .result-label {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 10px;
-  }
-
-  .result-main {
-    font-size: 26px;
-    font-weight: 500;
-    line-height: 1.25;
-    margin-bottom: 8px;
-  }
-
-  .result-main .card-highlight { color: var(--accent); }
-  .result-main .amount-highlight { color: var(--accent); font-family: var(--mono); }
-
-  .result-sub {
-    font-size: 13px;
-    color: var(--muted);
-    line-height: 1.6;
-    margin-bottom: 18px;
-  }
-
-  .breakdown {
-    background: var(--surface);
-    border-radius: 10px;
-    overflow: hidden;
-  }
-
-  .breakdown-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 14px;
-    font-size: 13px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .breakdown-row:last-child { border-bottom: none; }
-
-  .breakdown-row.winner { background: rgba(200, 241, 53, 0.05); }
-  .breakdown-row.capped { opacity: 0.5; }
-  .breakdown-row.no-card { opacity: 0.35; }
-
-  .br-name { color: var(--muted); }
-  .br-name strong { color: var(--text); }
-  .br-val { font-family: var(--mono); font-size: 12px; }
-  .br-val.top { color: var(--accent); font-weight: 500; }
-  .br-val.muted { color: var(--muted); }
-
-  .badge {
-    font-size: 10px;
-    padding: 2px 7px;
-    border-radius: 20px;
-    margin-left: 6px;
-    font-weight: 500;
-  }
-
-  .badge.best { background: rgba(200,241,53,0.15); color: var(--accent); }
-  .badge.capped { background: rgba(245,158,11,0.15); color: var(--warn); }
-  .badge.unavail { background: rgba(239,68,68,0.1); color: var(--danger); }
-
-  .flag {
-    margin-top: 14px;
-    font-size: 12px;
-    color: var(--warn);
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    line-height: 1.5;
-  }
-
-  .flag-icon { flex-shrink: 0; margin-top: 1px; }
-
-  hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
-</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KVSH — Payment Decision Engine</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a18; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .container { background: #fff; border-radius: 16px; border: 1px solid #e5e4dc; padding: 32px; width: 100%; max-width: 520px; }
+    h1 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+    .sub { font-size: 13px; color: #888; margin-bottom: 28px; }
+    label { font-size: 13px; font-weight: 500; color: #555; display: block; margin-bottom: 6px; }
+    select, input[type=number], input[type=text] { width: 100%; padding: 10px 12px; border: 1px solid #e0e0d8; border-radius: 8px; font-size: 14px; background: #fafaf8; color: #1a1a18; margin-bottom: 20px; outline: none; }
+    select:focus, input:focus { border-color: #7f77dd; }
+    .row { display: flex; gap: 12px; }
+    .row > div { flex: 1; }
+    .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+    .card-check { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #e5e4dc; border-radius: 8px; cursor: pointer; font-size: 12px; transition: all .15s; background: #fafaf8; }
+    .card-check:hover { border-color: #7f77dd; background: #f0effe; }
+    .card-check input { accent-color: #7f77dd; width: 14px; height: 14px; flex-shrink: 0; }
+    .cap-section { margin-bottom: 20px; }
+    .cap-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; }
+    .cap-row span { min-width: 140px; color: #555; }
+    .cap-row input { flex: 1; padding: 6px 10px; border: 1px solid #e0e0d8; border-radius: 6px; font-size: 13px; background: #fafaf8; color: #1a1a18; margin-bottom: 0; }
+    button { width: 100%; padding: 13px; background: #7f77dd; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .15s; }
+    button:hover { background: #6a62c4; }
+    button:active { transform: scale(0.99); }
+    .result { margin-top: 24px; padding: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; display: none; }
+    .result.low { background: #fffbeb; border-color: #fde68a; }
+    .result.medium { background: #eff6ff; border-color: #bfdbfe; }
+    .rec-line { font-size: 15px; font-weight: 600; color: #166534; margin-bottom: 8px; line-height: 1.5; }
+    .result.low .rec-line { color: #92400e; }
+    .result.medium .rec-line { color: #1e3a8a; }
+    .confidence { font-size: 12px; color: #888; margin-bottom: 14px; }
+    .fallback-title { font-size: 12px; font-weight: 600; color: #555; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .fallback-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; border-top: 1px solid #e5e4dc; gap: 8px; }
+    .fallback-card { font-size: 13px; font-weight: 500; }
+    .fallback-cashback { font-size: 13px; color: #16a34a; font-weight: 600; white-space: nowrap; }
+    .fallback-note { font-size: 11px; color: #888; margin-top: 2px; }
+    .error { margin-top: 16px; padding: 12px 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; font-size: 13px; color: #991b1b; display: none; }
+    .hint { font-size: 11px; color: #aaa; margin-top: -16px; margin-bottom: 20px; }
+  </style>
 </head>
 <body>
+<div class="container">
+  <h1>Payment Decision Engine</h1>
+  <p class="sub">Which card should I use at checkout?</p>
 
-<header>
-  <div class="logo">KVSH · DECISION ENGINE v0.1</div>
-  <h1>Which card should<br>you <span>use right now?</span></h1>
-  <p class="subtitle">Real-time recommendation under uncertainty</p>
-</header>
-
-<div class="form-card">
-  <div class="field">
-    <label>Merchant category</label>
-    <div class="category-grid">
-      <button class="cat-btn" data-cat="online" onclick="selectCat('online')">
-        <span class="cat-icon">🛒</span>Online
-      </button>
-      <button class="cat-btn" data-cat="dining" onclick="selectCat('dining')">
-        <span class="cat-icon">🍽</span>Dining
-      </button>
-      <button class="cat-btn" data-cat="grocery" onclick="selectCat('grocery')">
-        <span class="cat-icon">🥦</span>Grocery
-      </button>
-      <button class="cat-btn" data-cat="travel" onclick="selectCat('travel')">
-        <span class="cat-icon">✈</span>Travel
-      </button>
-      <button class="cat-btn" data-cat="fuel" onclick="selectCat('fuel')">
-        <span class="cat-icon">⛽</span>Fuel
-      </button>
-
+  <div class="row">
+    <div>
+      <label>Merchant category</label>
+      <select id="category">
+        <option value="default">-- Unknown / Other</option>
+        <option value="online">Online shopping</option>
+        <option value="dining">Dining / Food delivery</option>
+        <option value="grocery">Grocery</option>
+        <option value="travel">Travel / Hotels</option>
+        <option value="fuel">Fuel</option>
+        <option value="utility">Utilities / Bills</option>
+      </select>
+    </div>
+    <div>
+      <label>Transaction amount (Rs.)</label>
+      <input type="number" id="amount" placeholder="e.g. 2500" min="1"/>
     </div>
   </div>
 
-  <div class="field">
-    <label>Transaction amount</label>
-    <div class="amount-row">
-      <span class="rupee">₹</span>
-      <input type="number" id="amount" placeholder="0" min="1" oninput="updateBtn()" />
-    </div>
+  <label>Specific merchant (optional)</label>
+  <input type="text" id="merchant" placeholder="e.g. amazon, swiggy, flipkart, zomato…"/>
+  <p class="hint">If provided, merchant-specific rates will override category rates.</p>
+
+  <label>Cards you hold</label>
+  <div class="cards-grid">
+    <label class="card-check"><input type="checkbox" value="hdfc_millennia" checked> HDFC Millennia</label>
+    <label class="card-check"><input type="checkbox" value="axis_flipkart"> Axis Flipkart</label>
+    <label class="card-check"><input type="checkbox" value="sbi_simplyclick"> SBI SimplyCLICK</label>
+    <label class="card-check"><input type="checkbox" value="axis_magnus"> Axis Magnus</label>
+    <label class="card-check"><input type="checkbox" value="amex_mrcc"> Amex MRCC</label>
+    <label class="card-check"><input type="checkbox" value="hdfc_regalia"> HDFC Regalia</label>
+    <label class="card-check"><input type="checkbox" value="icici_amazon_pay"> ICICI Amazon Pay</label>
+    <label class="card-check"><input type="checkbox" value="hdfc_diners_black"> HDFC Diners Black</label>
+    <label class="card-check"><input type="checkbox" value="indusind_nexxt"> IndusInd Nexxt</label>
+    <label class="card-check"><input type="checkbox" value="sbi_cashback"> SBI Cashback</label>
   </div>
 
-  <div class="field">
-    <label>Cards you hold</label>
-    <div class="cards-grid">
-      <div class="card-toggle active" data-card="hdfc_millennia" onclick="toggleCard(this)">
-        <div class="check"><span class="check-mark">✓</span></div>
-        <div class="card-info">
-          <div class="card-name">Millennia</div>
-          <div class="card-sub">HDFC</div>
-        </div>
-      </div>
-      <div class="card-toggle active" data-card="axis_flipkart" onclick="toggleCard(this)">
-        <div class="check"><span class="check-mark">✓</span></div>
-        <div class="card-info">
-          <div class="card-name">Flipkart Axis</div>
-          <div class="card-sub">Axis</div>
-        </div>
-      </div>
-      <div class="card-toggle active" data-card="sbi_simplyclick" onclick="toggleCard(this)">
-        <div class="check"><span class="check-mark">✓</span></div>
-        <div class="card-info">
-          <div class="card-name">SimplyCLICK</div>
-          <div class="card-sub">SBI</div>
-        </div>
-      </div>
-      <div class="card-toggle" data-card="axis_magnus" onclick="toggleCard(this)">
-        <div class="check"><span class="check-mark">✓</span></div>
-        <div class="card-info">
-          <div class="card-name">Magnus</div>
-          <div class="card-sub">Axis</div>
-        </div>
-      </div>
-      <div class="card-toggle" data-card="amex_mrcc" onclick="toggleCard(this)">
-        <div class="check"><span class="check-mark">✓</span></div>
-        <div class="card-info">
-          <div class="card-name">MRCC</div>
-          <div class="card-sub">Amex</div>
-        </div>
-      </div>
-      <div class="card-toggle" data-card="hdfc_regalia" onclick="toggleCard(this)">
-        <div class="check"><span class="check-mark">✓</span></div>
-        <div class="card-info">
-          <div class="card-name">Regalia</div>
-          <div class="card-sub">HDFC</div>
-        </div>
-      </div>
-    </div>
+  <div class="cap-section" id="cap-section">
+    <label>Monthly reward already used (optional)</label>
+  </div>
+
+  <button onclick="getRecommendation()">Recommend best card</button>
+
+  <div class="error" id="error"></div>
+
+  <div class="result" id="result">
+    <div class="rec-line" id="rec-line"></div>
+    <div class="confidence" id="confidence"></div>
+    <div class="fallback-title">Full comparison</div>
+    <div id="fallback"></div>
   </div>
 </div>
 
-<button class="decide-btn" id="decide-btn" onclick="decide()" disabled>
-  Select category + enter amount
-</button>
-
-<div class="result-card" id="result"></div>
-
 <script>
-const CARDS = {
-  hdfc_millennia: {
-    name: "HDFC Millennia",
-    short: "Millennia",
-    issuer: "HDFC",
-    rewards: {
-      online: 0.05,
-      dining: 0.05,
-      grocery: 0.05,
-      travel: 0.01,
-      fuel: 0.01,
-      utility: 0.01,
-      default: 0.01
-    },
-    monthly_cap: 1000,
-    acceptance: { offline: true, online: true }
-  },
-  axis_flipkart: {
-    name: "Flipkart Axis",
-    short: "Flipkart Axis",
-    issuer: "Axis",
-    rewards: {
-      online: 0.05,
-      dining: 0.04,
-      grocery: 0.04,
-      travel: 0.04,
-      fuel: 0.01,
-      utility: 0.015,
-      default: 0.015
-    },
-    monthly_cap: null,
-    acceptance: { offline: true, online: true }
-  },
-  sbi_simplyclick: {
-    name: "SBI SimplyCLICK",
-    short: "SimplyCLICK",
-    issuer: "SBI",
-    rewards: {
-      online: 0.025,
-      dining: 0.005,
-      grocery: 0.005,
-      travel: 0.025,
-      fuel: 0.005,
-      utility: 0.005,
-      default: 0.005
-    },
-    monthly_cap: null,
-    annual_cap: 2000,
-    acceptance: { offline: true, online: true }
-  },
-  axis_magnus: {
-    name: "Axis Magnus",
-    short: "Magnus",
-    issuer: "Axis",
-    rewards: {
-      online: 0.036,
-      dining: 0.036,
-      grocery: 0.036,
-      travel: 0.036,
-      fuel: 0.005,
-      utility: 0.005,
-      default: 0.036
-    },
-    monthly_cap: null,
-    acceptance: { offline: true, online: true }
-  },
-  amex_mrcc: {
-    name: "Amex MRCC",
-    short: "Amex MRCC",
-    issuer: "Amex",
-    rewards: {
-      online: 0.025,
-      dining: 0.025,
-      grocery: 0.025,
-      travel: 0.005,
-      fuel: 0.005,
-      utility: 0.005,
-      default: 0.005
-    },
-    monthly_cap: null,
-    acceptance: { offline: false, online: true }
-  },
-  hdfc_regalia: {
-    name: "HDFC Regalia",
-    short: "Regalia",
-    issuer: "HDFC",
-    rewards: {
-      online: 0.013,
-      dining: 0.013,
-      grocery: 0.013,
-      travel: 0.013,
-      fuel: 0.005,
-      utility: 0.013,
-      default: 0.013
-    },
-    monthly_cap: null,
-    acceptance: { offline: true, online: true }
+  const CAP_CARDS = {
+    hdfc_millennia:   "HDFC Millennia",
+    sbi_simplyclick:  "SBI SimplyCLICK",
+    amex_mrcc:        "Amex MRCC",
+    axis_magnus:      "Axis Magnus",
+    indusind_nexxt:   "IndusInd Nexxt",
+    sbi_cashback:     "SBI Cashback",
+  };
+
+  function updateCapInputs() {
+    const checked = [...document.querySelectorAll('.cards-grid input:checked')].map(i => i.value);
+    const section = document.getElementById('cap-section');
+    section.querySelectorAll('.cap-row').forEach(e => e.remove());
+    checked.forEach(id => {
+      if (CAP_CARDS[id]) {
+        const row = document.createElement('div');
+        row.className = 'cap-row';
+        row.innerHTML = `<span>${CAP_CARDS[id]}</span><input type="number" id="cap_${id}" placeholder="Rs. used so far" min="0"/>`;
+        section.appendChild(row);
+      }
+    });
   }
-};
 
-let selectedCat = null;
-let capState = {};
+  document.querySelectorAll('.cards-grid input').forEach(cb => cb.addEventListener('change', updateCapInputs));
+  updateCapInputs();
 
-function selectCat(cat) {
-  selectedCat = cat;
-  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector(`[data-cat="${cat}"]`).classList.add('active');
-  updateBtn();
-}
+  async function getRecommendation() {
+    const category = document.getElementById('category').value;
+    const amount   = parseFloat(document.getElementById('amount').value);
+    const merchant = document.getElementById('merchant').value.trim() || null;
+    const cards    = [...document.querySelectorAll('.cards-grid input:checked')].map(i => i.value);
+    const caps_used = {};
+    cards.forEach(id => {
+      const el = document.getElementById('cap_' + id);
+      if (el && el.value) caps_used[id] = parseFloat(el.value);
+    });
 
-function toggleCard(el) {
-  el.classList.toggle('active');
-  updateBtn();
-}
+    const errEl = document.getElementById('error');
+    errEl.style.display = 'none';
 
-function updateBtn() {
-  const amount = parseFloat(document.getElementById('amount').value);
-  const btn = document.getElementById('decide-btn');
-  const hasCards = document.querySelectorAll('.card-toggle.active').length > 0;
-  if (selectedCat && amount > 0 && hasCards) {
-    btn.disabled = false;
-    btn.textContent = 'Get recommendation →';
-  } else {
+    if (!amount || amount <= 0) { errEl.textContent = 'Enter a valid amount'; errEl.style.display = 'block'; return; }
+    if (!cards.length)          { errEl.textContent = 'Select at least one card'; errEl.style.display = 'block'; return; }
+
+    const btn = document.querySelector('button');
+    btn.textContent = 'Thinking…';
     btn.disabled = true;
-    btn.textContent = !selectedCat ? 'Select a category first' : !amount ? 'Enter an amount' : 'Select at least one card';
+
+    try {
+      const res  = await fetch('/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category, amount, cards, caps_used, merchant })
+      });
+      const data = await res.json();
+
+      if (data.error) { errEl.textContent = data.error; errEl.style.display = 'block'; return; }
+
+      const resultEl = document.getElementById('result');
+      const conf = data.confidence || '';
+      resultEl.className = 'result ' + (conf.startsWith('low') ? 'low' : conf.startsWith('medium') ? 'medium' : '');
+      document.getElementById('rec-line').textContent = data.recommendation;
+      document.getElementById('confidence').textContent = 'Confidence: ' + data.confidence;
+
+      const fb = document.getElementById('fallback');
+      fb.innerHTML = (data.fallback_chain || []).map(c => `
+        <div class="fallback-row">
+          <div>
+            <div class="fallback-card">${c.card}</div>
+            <div class="fallback-note">${c.note}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="fallback-cashback">${c.cashback}</div>
+            <div style="font-size:11px;color:#888">${c.rate}</div>
+          </div>
+        </div>`).join('');
+
+      resultEl.style.display = 'block';
+    } catch(e) {
+      errEl.textContent = 'Server error — make sure the Flask app is running';
+      errEl.style.display = 'block';
+    } finally {
+      btn.textContent = 'Recommend best card';
+      btn.disabled = false;
+    }
   }
-}
-
-function getRate(card, cat) {
-  return card.rewards[cat] || card.rewards.default;
-}
-
-function isCapped(cardKey, earn) {
-  const card = CARDS[cardKey];
-  if (!card.monthly_cap) return false;
-  const used = capState[cardKey] || 0;
-  return used + earn > card.monthly_cap;
-}
-
-function getRemainingCap(cardKey, earn) {
-  const card = CARDS[cardKey];
-  if (!card.monthly_cap) return earn;
-  const used = capState[cardKey] || 0;
-  const remaining = card.monthly_cap - used;
-  return Math.max(0, Math.min(earn, remaining));
-}
-
-function decide() {
-  const amount = parseFloat(document.getElementById('amount').value);
-  const cat = selectedCat;
-  const selectedCards = Array.from(document.querySelectorAll('.card-toggle.active')).map(el => el.dataset.card);
-
-  const results = selectedCards.map(key => {
-    const card = CARDS[key];
-    const rate = getRate(card, cat);
-    const rawEarn = amount * rate;
-    const actualEarn = getRemainingCap(key, rawEarn);
-    const cappedOut = card.monthly_cap && (capState[key] || 0) >= card.monthly_cap;
-    const partialCap = rawEarn !== actualEarn && !cappedOut;
-
-    return {
-      key, card,
-      rate, rawEarn, actualEarn,
-      cappedOut, partialCap,
-      score: cappedOut ? -1 : actualEarn
-    };
-  });
-
-  results.sort((a, b) => b.score - a.score);
-  const winner = results[0];
-  const allCapped = results.every(r => r.cappedOut);
-  const amexWon = winner.key === 'amex_mrcc';
-
-  const resultEl = document.getElementById('result');
-  resultEl.className = 'result-card show';
-
-  let flags = [];
-  if (winner.partialCap) flags.push(`${winner.card.short} has a ₹${CARDS[winner.key].monthly_cap.toLocaleString()}/month cap — only ₹${winner.actualEarn.toFixed(0)} more available this month.`);
-  if (allCapped) flags.push('All your cards have hit their monthly reward cap.');
-  if (amexWon) flags.push('Amex has limited offline acceptance — confirm the merchant accepts it before paying.');
-
-  if (allCapped) {
-    resultEl.classList.add('warn');
-  } else {
-    resultEl.classList.add('success');
-  }
-
-  const breakdownRows = results.map((r, i) => {
-    let badge = '';
-    let valClass = 'muted';
-    let rowClass = '';
-    if (i === 0 && !r.cappedOut) { badge = '<span class="badge best">best</span>'; valClass = 'top'; rowClass = 'winner'; }
-    if (r.cappedOut) { badge = '<span class="badge capped">cap hit</span>'; rowClass = 'capped'; }
-
-    const display = r.cappedOut ? '₹0' : `₹${r.actualEarn.toFixed(0)}`;
-    const rateDisplay = (r.rate * 100).toFixed(1) + '%';
-    return `<div class="breakdown-row ${rowClass}">
-      <span class="br-name"><strong>${r.card.short}</strong> · ${rateDisplay}${badge}</span>
-      <span class="br-val ${valClass}">${display}</span>
-    </div>`;
-  }).join('');
-
-  const flagHtml = flags.map(f => `<div class="flag"><span class="flag-icon">⚠</span><span>${f}</span></div>`).join('');
-
-  resultEl.innerHTML = `
-    <div class="result-label">Recommendation</div>
-    <div class="result-main">Use <span class="card-highlight">${winner.card.short}</span> — earn <span class="amount-highlight">₹${winner.actualEarn.toFixed(0)}</span> back</div>
-    <div class="result-sub">${winner.card.issuer} · ${(winner.rate*100).toFixed(1)}% on ${cat} · on ₹${amount.toLocaleString()}</div>
-    <div class="breakdown">${breakdownRows}</div>
-    ${flagHtml}
-  `;
-
-  resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
 </script>
 </body>
 </html>
